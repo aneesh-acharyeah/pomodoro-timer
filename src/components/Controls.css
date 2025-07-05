@@ -1,0 +1,13 @@
+.controls button {
+  padding: 10px 20px;
+  margin: 10px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.controls button:hover {
+  background-color: #ff6347;
+  color: #fff;
+}
