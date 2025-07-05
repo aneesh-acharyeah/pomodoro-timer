@@ -4,54 +4,29 @@ import Controls from "./components/Controls";
 import "./App.css";
 
 const App = () => {
-  const [workTime, setWorkTime] = useState(25); // minutes
-  const [shortBreakTime, setShortBreakTime] = useState(5);
-  const [longBreakTime, setLongBreakTime] = useState(15);
-  const [timeLeft, setTimeLeft] = useState(0); // seconds
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 min
   const [isActive, setIsActive] = useState(false);
-  const [session, setSession] = useState("Work");
+  const [session, setSession] = useState("Work"); // Work | Short Break | Long Break
   const [completed, setCompleted] = useState(0);
-  const [settingsLocked, setSettingsLocked] = useState(false);
 
   useEffect(() => {
     let timer = null;
     if (isActive && timeLeft > 0) {
       timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-    } else if (timeLeft === 0 && isActive) {
-      alert(`${session} Session Complete!`);
-      handleSessionSwitch();
+    } else if (timeLeft === 0) {
+      if (session === "Work") {
+        setCompleted((prev) => prev + 1);
+        setSession(completed % 4 === 0 ? "Long Break" : "Short Break");
+        setTimeLeft(completed % 4 === 0 ? 15 * 60 : 5 * 60);
+      } else {
+        setSession("Work");
+        setTimeLeft(25 * 60);
+      }
+      setIsActive(false);
+      alert("Session Complete!");
     }
     return () => clearInterval(timer);
-  }, [isActive, timeLeft]);
-
-  const handleSessionSwitch = () => {
-    if (session === "Work") {
-      setCompleted((prev) => prev + 1);
-      const nextSession = completed % 4 === 0 ? "Long Break" : "Short Break";
-      setSession(nextSession);
-      setTimeLeft(
-        (nextSession === "Short Break" ? shortBreakTime : longBreakTime) * 60
-      );
-    } else {
-      setSession("Work");
-      setTimeLeft(workTime * 60);
-    }
-    setIsActive(false);
-  };
-
-  const startTimer = () => {
-    setTimeLeft(workTime * 60);
-    setSettingsLocked(true);
-    setIsActive(true);
-  };
-
-  const resetTimer = () => {
-    setIsActive(false);
-    setSettingsLocked(false);
-    setSession("Work");
-    setTimeLeft(0);
-    setCompleted(0);
-  };
+  }, [isActive, timeLeft, session, completed]);
 
   const formatTime = (seconds) => {
     const min = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -61,48 +36,18 @@ const App = () => {
 
   return (
     <div className="app">
-      <h1>🍅 Customizable Pomodoro Timer</h1>
-      {!settingsLocked && (
-        <div className="settings">
-          <label>
-            Work (mins):
-            <input
-              type="number"
-              value={workTime}
-              onChange={(e) => setWorkTime(Number(e.target.value))}
-              min="1"
-            />
-          </label>
-          <label>
-            Short Break (mins):
-            <input
-              type="number"
-              value={shortBreakTime}
-              onChange={(e) => setShortBreakTime(Number(e.target.value))}
-              min="1"
-            />
-          </label>
-          <label>
-            Long Break (mins):
-            <input
-              type="number"
-              value={longBreakTime}
-              onChange={(e) => setLongBreakTime(Number(e.target.value))}
-              min="1"
-            />
-          </label>
-        </div>
-      )}
+      <h1>🍅 Pomodoro Timer</h1>
       <h2>{session} Session</h2>
       <Timer time={formatTime(timeLeft)} />
       <Controls
         isActive={isActive}
-        onStartPause={() =>
-          settingsLocked ? setIsActive(!isActive) : startTimer()
-        }
-        onReset={resetTimer}
+        onStartPause={() => setIsActive(!isActive)}
+        onReset={() => {
+          setIsActive(false);
+          setTimeLeft(session === "Work" ? 25 * 60 : session === "Short Break" ? 5 * 60 : 15 * 60);
+        }}
       />
-      <p>✅ Completed Work Sessions: {completed} / 4</p>
+      <p>✅ Completed: {completed} / 4</p>
     </div>
   );
 };
